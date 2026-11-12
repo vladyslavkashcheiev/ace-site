@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { avatarUrl } from "@/lib/discord";
 import { DiscordLogo, Shield } from "./Icons";
 import NavLinks from "./NavLinks";
+import { atLeast } from "@/lib/access";
 
 export default async function Header() {
   const s = await getSession();
@@ -17,7 +18,7 @@ export default async function Header() {
             <small>National Guard · Fort Zancudo</small>
           </span>
         </Link>
-        <NavLinks inAce={inAce} />
+        <NavLinks inAce={inAce} staff={!!s && atLeast(s.access, "instructor")} admin={s?.access === "admin"} />
         {s ? (
           <div className="user">
             <Link href={inAce ? "/profile" : "/"} className="user-chip">

@@ -13,9 +13,11 @@ const ACE = [
   { href: "/exam", label: "Экзамены" },
 ];
 
-export default function NavLinks({ inAce }: { inAce: boolean }) {
+export default function NavLinks({ inAce, staff, admin }: { inAce: boolean; staff?: boolean; admin?: boolean }) {
   const path = usePathname();
-  const items = inAce ? [PUBLIC[0], ACE[0], PUBLIC[1], PUBLIC[2], ACE[1], ACE[2]] : PUBLIC;
+  const items = inAce ? [PUBLIC[0], ACE[0], PUBLIC[1], PUBLIC[2], ACE[1], ACE[2]] : [...PUBLIC];
+  if (staff) items.push({ href: "/staff", label: "Штаб" });
+  if (admin) items.push({ href: "/admin", label: "Админ" });
   return (
     <nav className="nav" aria-label="Основное меню">
       {items.map((i) => (

@@ -70,19 +70,59 @@ export async function fetchGuildRoleNames(): Promise<Record<string, string>> {
   return Object.fromEntries(list.map((r) => [r.id, r.name]));
 }
 
-/** Отправить сообщение в канал от имени бота. Пингуются только перечисленные роли. */
-export async function postToChannel(channelId: string, content: string, pingRoles: string[] = []) {
+/** Отправить сообщение в канал от имени бота. Пингуются только перечисленные роли/люди. */
+export async function postToChannel(
+  channelId: string,
+  content: string,
+  pingRoles: string[] = [],
+  opts: { replyTo?: string | null; pingUsers?: string[] } = {},
+) {
   const res = await fetch(`${API}/channels/${channelId}/messages`, {
     method: "POST",
     headers: botHeaders(),
     body: JSON.stringify({
       content: content.slice(0, 2000),
-      allowed_mentions: { parse: [], roles: pingRoles },
+      allowed_mentions: { parse: [], roles: pingRoles, users: opts.pingUsers ?? [], replied_user: false },
+      ...(opts.replyTo ? { message_reference: { message_id: opts.replyTo, fail_if_not_exists: false } } : {}),
     }),
   });
   if (!res.ok) throw new Error(`Discord post: ${res.status} ${await res.text()}`);
   return (await res.json()) as { id: string };
 }
+
+export type GuildMember = { id: string; username: string; globalName: string | null; nick: string | null; avatar: string | null; roles: string[] };
+
+/** Все участники сервера (нужен Server Members Intent у бота). */
+export async function listGuildMembers(): Promise<GuildMember[]> {
+  const out: GuildMember[] = [];
+  let after = "0";
+  for (let page = 0; page < 20; page++) {
+    const res = await fetch(`${API}/guilds/${GUILD_ID}/members?limit=1000&after=${after}`, { headers: botHeaders(), cache: "no-store" });
+    if (!res.ok) throw new Error(`Discord members: ${res.status} ${await res.text()}`);
+    const batch = (await res.json()) as {
+      user: { id: string; username: string; global_name: string | null; avatar: string | null; bot?: boolean };
+      nick: string | null;
+      roles: string[];
+    }[];
+    for (const m of batch) {
+      if (m.user.bot) continue;
+      out.push({ id: m.user.id, username: m.user.username, globalName: m.user.global_name, nick: m.nick, avatar: m.user.avatar, roles: m.roles });
+    }
+    if (batch.length < 1000) break;
+    after = batch[batch.length - 1].user.id;
+  }
+  return out;
+}
+
+async function roleRequest(method: "PUT" | "DELETE", userId: string, roleId: string, reason: string) {
+  const res = await fetch(`${API}/guilds/${GUILD_ID}/members/${userId}/roles/${roleId}`, {
+    method,
+    headers: { ...botHeaders(), "X-Audit-Log-Reason": encodeURIComponent(reason.slice(0, 400)) },
+  });
+  if (!res.ok && res.status !== 404) throw new Error(`Discord role ${method}: ${res.status} ${await res.text()}`);
+}
+export const addRole = (userId: string, roleId: string, reason: string) => roleRequest("PUT", userId, roleId, reason);
+export const removeRole = (userId: string, roleId: string, reason: string) => roleRequest("DELETE", userId, roleId, reason);
 
 export function avatarUrl(id: string, avatar: string | null) {
   if (!avatar) return `https://cdn.discordapp.com/embed/avatars/${Number(BigInt(id) >> 22n) % 6}.png`;

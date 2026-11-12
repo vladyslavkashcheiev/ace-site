@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { requireAce } from "@/lib/guard";
-import { ACCESS_LABEL } from "@/lib/access";
+import { ACCESS_LABEL, atLeast } from "@/lib/access";
 import { avatarUrl, fetchGuildRoleNames } from "@/lib/discord";
 import { RANK_ROLES, STAFF_ROLES, ACE_MEMBER_ROLE } from "@/config/discord";
 import { lastExamRequests, lastReports, type ExamRow, type ReportRow } from "@/lib/db";
@@ -10,6 +10,9 @@ const STATUS: Record<string, [string, string]> = {
   pending: ["На проверке", "var(--gold)"],
   approved: ["Одобрено", "var(--green)"],
   rejected: ["Отклонено", "var(--red)"],
+  accepted: ["Назначено", "var(--green)"],
+  passed: ["Сдал", "var(--green)"],
+  failed: ["Не сдал", "var(--red)"],
 };
 const fmt = (d: string) => new Date(d).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kiev" });
 
@@ -44,6 +47,12 @@ export default async function Profile() {
         </div>
       </div>
 
+      {atLeast(s.access, "instructor") && (
+        <div className="row">
+          <Link className="btn" href="/staff">Открыть штаб</Link>
+          {s.access === "admin" && <Link className="btn ghost" href="/admin">Админ-панель</Link>}
+        </div>
+      )}
       {s.access === "admin" && (
         <div className="panel pad stack" style={{ borderColor: "var(--olive)", gap: 8 }}>
           <span className="lbl">Диагностика (видишь только ты)</span>
