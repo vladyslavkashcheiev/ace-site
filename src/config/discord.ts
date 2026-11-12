@@ -11,6 +11,9 @@ export const STAFF_ROLES = {
   instructor: "1491389890322108578", // Inst.ACE [7-11]
 } as const;
 
+/** Общая роль «ACE» без звания. Пусто = не используется. */
+export const ACE_MEMBER_ROLE: string = process.env.ACE_MEMBER_ROLE_ID ?? "";
+
 /** Роли званий ACE. Порядок = старшинство. num — номер ранга в армии. */
 export const RANK_ROLES: { num: number; rank: string; id: string }[] = [
   { num: 3, rank: "Специалист", id: "1513895125019787334" },

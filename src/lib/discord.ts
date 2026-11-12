@@ -62,6 +62,14 @@ export async function fetchMemberRoles(userId: string): Promise<{ roles: string[
   return { roles: m.roles, nick: m.nick };
 }
 
+/** Все роли сервера: id → название (для диагностики). */
+export async function fetchGuildRoleNames(): Promise<Record<string, string>> {
+  const res = await fetch(`${API}/guilds/${GUILD_ID}/roles`, { headers: botHeaders(), next: { revalidate: 300 } });
+  if (!res.ok) throw new Error(`Discord roles: ${res.status}`);
+  const list = (await res.json()) as { id: string; name: string }[];
+  return Object.fromEntries(list.map((r) => [r.id, r.name]));
+}
+
 /** Отправить сообщение в канал от имени бота. Пингуются только перечисленные роли. */
 export async function postToChannel(channelId: string, content: string, pingRoles: string[] = []) {
   const res = await fetch(`${API}/channels/${channelId}/messages`, {

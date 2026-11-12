@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { requireAce } from "@/lib/guard";
 import { ACCESS_LABEL } from "@/lib/access";
-import { avatarUrl } from "@/lib/discord";
+import { avatarUrl, fetchGuildRoleNames } from "@/lib/discord";
+import { RANK_ROLES, STAFF_ROLES, ACE_MEMBER_ROLE } from "@/config/discord";
 import { lastExamRequests, lastReports, type ExamRow, type ReportRow } from "@/lib/db";
 import { rankName, requirementFrom } from "@/lib/ranks";
 
@@ -21,6 +22,9 @@ export default async function Profile() {
   } catch (e) {
     console.error(e);
   }
+  let roleNames: Record<string, string> = {};
+  if (s.access === "admin") roleNames = await fetchGuildRoleNames().catch(() => ({}));
+  const known = new Set<string>([...RANK_ROLES.map((r) => r.id), ...Object.values(STAFF_ROLES), ACE_MEMBER_ROLE].filter(Boolean));
   const rank = s.rankNum;
   const req = rank ? requirementFrom(rank) : null;
   const lastAt = reports[0] ? new Date(reports[0].created_at).getTime() : 0;
@@ -39,6 +43,29 @@ export default async function Profile() {
           </div>
         </div>
       </div>
+
+      {s.access === "admin" && (
+        <div className="panel pad stack" style={{ borderColor: "var(--olive)", gap: 8 }}>
+          <span className="lbl">Диагностика (видишь только ты)</span>
+          {!s.check.ok ? (
+            <span style={{ color: "var(--red)" }}>Бот не смог прочитать сервер: {s.check.error}. Проверь DISCORD_BOT_TOKEN в Vercel и что бот добавлен на сервер.</span>
+          ) : !s.check.inGuild ? (
+            <span style={{ color: "var(--red)" }}>Бот работает, но не нашёл тебя на сервере ACE (ID сервера в настройках сайта может быть другим).</span>
+          ) : (
+            <>
+              <span style={{ color: "var(--green)" }}>Бот видит тебя на сервере. Ролей: {s.check.roles.length}.</span>
+              <div className="row" style={{ gap: 6 }}>
+                {s.check.roles.map((id) => (
+                  <span key={id} className="pill" style={known.has(id) ? { borderColor: "var(--gold)", color: "var(--gold-2)" } : {}}>
+                    {roleNames[id] ?? "роль"} <small className="muted">{id}</small>
+                  </span>
+                ))}
+              </div>
+              <span className="muted" style={{ fontSize: 14 }}>Золотым выделены роли, которые сайт знает (звания, Cur/Com/D.Com/Inst, общая ACE).</span>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="split">
         <div className="main panel pad stack">
