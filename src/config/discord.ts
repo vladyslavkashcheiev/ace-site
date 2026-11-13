@@ -27,7 +27,7 @@ export const RANK_ROLES: { num: number; rank: string; id: string }[] = [
 ];
 
 export const CHANNELS = {
-  promotionReports: "1532714126575665264", // 🗃️-отчет-на-повышение
+  promotionReports: "1570709877448380487", // отчет-на-повышение (новый канал)
   examSignup: "1513291429470933072", // ✉️┃заявка-на-аттестацию
   examResults: "1516188389458837514", // 📒┃отчет-экзаменации
 } as const;
