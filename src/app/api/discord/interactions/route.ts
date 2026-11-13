@@ -1,7 +1,8 @@
 import { NextResponse, after, type NextRequest } from "next/server";
 import { createPublicKey, verify } from "node:crypto";
 import { CLIENT_ID, DISCORD_PUBLIC_KEY } from "@/config/discord";
-import { atLeast, resolveAccess } from "@/lib/access";
+import { atLeast } from "@/lib/access";
+import { accessFor } from "@/lib/admins";
 import { getProfile } from "@/lib/db";
 import { reviewExam, reviewReport } from "@/lib/review";
 import type { Actor } from "@/lib/staff";
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
   const id = Number(idStr);
   if (!["rep", "exam", "repmodal", "exammodal"].includes(kind) || !id) return ephemeral("Неизвестная кнопка.");
 
-  const { access } = resolveAccess(m.user.id, m.roles);
+  const { access } = await accessFor(m.user.id, m.roles);
   const isReport = kind.startsWith("rep");
   const need = isReport ? "deputy" : "instructor";
   if (!atLeast(access, need)) return ephemeral(isReport ? "Одобрять отчёты могут D.Com, Com, Cur." : "Принимать аттестации могут инструкторы и командование.");

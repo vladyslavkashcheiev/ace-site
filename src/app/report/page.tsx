@@ -1,4 +1,5 @@
 import { requireAce } from "@/lib/guard";
+import { cooldownSince } from "@/lib/admins";
 import { lastReports } from "@/lib/db";
 import { requirementFrom } from "@/lib/ranks";
 import ReportForm from "./ReportForm";
@@ -9,7 +10,8 @@ export default async function ReportPage() {
   const s = await requireAce("/report");
   let hoursLeft = 0;
   try {
-    const last = (await lastReports(s.id, 3)).find((r) => r.status !== "rejected");
+    const since = new Date(await cooldownSince(s.id)).getTime();
+    const last = (await lastReports(s.id, 3)).find((r) => r.status !== "rejected" && new Date(r.created_at).getTime() >= since);
     if (last) hoursLeft = Math.max(0, Math.ceil((new Date(last.created_at).getTime() + 48 * 3600e3 - Date.now()) / 3600e3));
   } catch (e) {
     console.error(e);

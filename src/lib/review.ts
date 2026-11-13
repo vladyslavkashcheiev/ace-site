@@ -4,7 +4,7 @@ import { db } from "./db";
 import { fetchMemberRoles, finalizeMessage, publish, replyTo } from "./discord";
 import { resolveAccess } from "./access";
 import { rankName } from "./ranks";
-import { ADMIN_USER_ID, CHANNELS } from "@/config/discord";
+import { CHANNELS } from "@/config/discord";
 
 export type ReviewResult = { ok: true; info: string } | { ok: false; error: string };
 
@@ -16,7 +16,7 @@ export async function reviewReport(actor: Actor, id: number, action: string, not
   const { data: r, error } = await db().from("promotion_reports").select("*, profiles(ic_name)").eq("id", id).maybeSingle();
   if (error || !r) return { ok: false, error: "Отчёт не найден." };
   if (r.status !== "pending") return { ok: false, error: `Отчёт уже рассмотрен (${r.status === "approved" ? "одобрен" : "отклонён"}${r.reviewed_by_name ? `, ${r.reviewed_by_name}` : ""}).` };
-  if (r.discord_id === actor.id && actor.id !== ADMIN_USER_ID) return { ok: false, error: "Свой отчёт рассматривает другой член командования." };
+  if (r.discord_id === actor.id && actor.access !== "admin") return { ok: false, error: "Свой отчёт рассматривает другой член командования." };
 
   const name = (r.profiles as { ic_name: string } | null)?.ic_name ?? r.discord_id;
   let info = "Отклонено.";
@@ -75,7 +75,7 @@ export async function reviewExam(actor: Actor, id: number, action: string, noteI
   const { data: e, error } = await db().from("exam_requests").select("*, profiles(ic_name, passport)").eq("id", id).maybeSingle();
   if (error || !e) return { ok: false, error: "Заявка не найдена." };
   if (!step.from.includes(e.status)) return { ok: false, error: "Статус заявки уже изменился." };
-  if (e.discord_id === actor.id && actor.id !== ADMIN_USER_ID) return { ok: false, error: "Свою заявку принимает другой инструктор." };
+  if (e.discord_id === actor.id && actor.access !== "admin") return { ok: false, error: "Свою заявку принимает другой инструктор." };
 
   const p = e.profiles as { ic_name: string; passport: string } | null;
   await db().from("exam_requests").update({

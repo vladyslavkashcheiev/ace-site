@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { apiActor, audit, setRankRole } from "@/lib/staff";
 import { addRole, fetchMemberRoles, removeRole } from "@/lib/discord";
-import { getProfile } from "@/lib/db";
+import { db, getProfile } from "@/lib/db";
 import { ACE_MEMBER_ROLE, ADMIN_USER_ID, RANK_ROLES, STAFF_ROLES } from "@/config/discord";
 import { rankName } from "@/lib/ranks";
 
@@ -16,6 +16,34 @@ export async function POST(req: NextRequest) {
   const userId = String(b.userId ?? "").trim();
   if (!/^\d{15,21}$/.test(userId)) return fail("Неверный Discord ID.");
   const reason = String(b.reason ?? "").trim().slice(0, 200);
+
+  // Администраторы сайта — управляет только владелец
+  if (b.op === "addAdmin" || b.op === "removeAdmin") {
+    if (actor.id !== ADMIN_USER_ID) return fail("Назначать администраторов может только владелец сайта.", 403);
+    if (userId === ADMIN_USER_ID) return fail("Владелец всегда администратор.");
+    const m0 = await fetchMemberRoles(userId).catch(() => null);
+    const p0 = await getProfile(userId).catch(() => null);
+    const nm = p0?.ic_name ?? m0?.nick ?? userId;
+    if (b.op === "addAdmin") {
+      const { error } = await db().from("site_admins").upsert({ discord_id: userId, name: nm, added_by: actor.id, added_by_name: actor.name });
+      if (error) return fail("Ошибка базы: выполни supabase/stage3.sql.", 500);
+      await audit(actor, "Назначил администратора сайта", { id: userId, name: nm }, reason || undefined);
+    } else {
+      await db().from("site_admins").delete().eq("discord_id", userId);
+      await audit(actor, "Снял администратора сайта", { id: userId, name: nm }, reason || undefined);
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  // Сброс КД 48 ч на отчёт
+  if (b.op === "resetCooldown") {
+    const p0 = await getProfile(userId).catch(() => null);
+    if (!p0) return fail("Боец ещё не заходил на сайт — КД у него нет.");
+    const { error } = await db().from("profiles").update({ cooldown_reset_at: new Date().toISOString() }).eq("discord_id", userId);
+    if (error) return fail("Ошибка базы: выполни supabase/stage3.sql.", 500);
+    await audit(actor, "Сбросил КД отчёта", { id: userId, name: p0.ic_name }, reason || undefined);
+    return NextResponse.json({ ok: true });
+  }
 
   const member = await fetchMemberRoles(userId);
   if (!member) return fail("Этого человека нет на сервере.");

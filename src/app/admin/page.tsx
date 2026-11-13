@@ -5,6 +5,8 @@ import { resolveAccess, ACCESS_LABEL } from "@/lib/access";
 import { ACE_MEMBER_ROLE, RANK_ROLES, STAFF_ROLES } from "@/config/discord";
 import MemberRow from "./MemberRow";
 import AddMember from "./AddMember";
+import Admins from "./Admins";
+import { ADMIN_USER_ID } from "@/config/discord";
 
 export const metadata = { title: "Админ-панель — ACE" };
 export const dynamic = "force-dynamic";
@@ -18,7 +20,7 @@ const STAFF = [
 const fmt = (d: string) => new Date(d).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kiev" });
 
 export default async function Admin() {
-  await requireStaff("admin", "/admin");
+  const me = await requireStaff("admin", "/admin");
 
   let members: GuildMember[] = [];
   let loadError = "";
@@ -31,6 +33,8 @@ export default async function Admin() {
   const ace = members.filter((m) => m.roles.some((r) => aceIds.has(r)));
 
   const ids = ace.map((m) => m.id);
+  const { data: adminRows } = await db().from("site_admins").select("discord_id, name, added_by_name").order("created_at");
+  const extraAdmins = new Set((adminRows ?? []).map((a) => a.discord_id));
   const [{ data: profiles }, { data: log }] = await Promise.all([
     ids.length ? db().from("profiles").select("discord_id, ic_name, passport").in("discord_id", ids) : Promise.resolve({ data: [] as { discord_id: string; ic_name: string; passport: string }[] }),
     db().from("audit_log").select("*").order("created_at", { ascending: false }).limit(40),
@@ -39,7 +43,9 @@ export default async function Admin() {
 
   const rows = ace
     .map((m) => {
-      const { access, rankNum } = resolveAccess(m.id, m.roles);
+      const r0 = resolveAccess(m.id, m.roles);
+      const access = extraAdmins.has(m.id) ? ("admin" as const) : r0.access;
+      const rankNum = r0.rankNum;
       const rankRole = [...RANK_ROLES].reverse().find((r) => m.roles.includes(r.id));
       const p = prof.get(m.id);
       return {
@@ -68,13 +74,24 @@ export default async function Admin() {
         </div>
       )}
 
-      <AddMember />
+      <div className="split">
+        <div className="main"><AddMember /></div>
+        <div className="side">
+          <Admins
+            canManage={me.id === ADMIN_USER_ID}
+            rows={[
+              { id: ADMIN_USER_ID, name: rows.find((r) => r.m.id === ADMIN_USER_ID)?.name ?? "Владелец", addedBy: "", owner: true },
+              ...(adminRows ?? []).map((a) => ({ id: a.discord_id, name: a.name ?? a.discord_id, addedBy: a.added_by_name ?? "" })),
+            ]}
+          />
+        </div>
+      </div>
 
       <section className="stack">
         <span className="h3">Личный состав · {rows.length}</span>
         <div className="tab-body" style={{ overflowX: "auto" }}>
-          <div style={{ minWidth: 900 }}>
-            <div className="trow head" style={{ gridTemplateColumns: "minmax(200px,1.3fr) minmax(190px,1fr) minmax(260px,1.6fr) 120px" }}>
+          <div style={{ minWidth: 1000 }}>
+            <div className="trow head" style={{ gridTemplateColumns: "minmax(200px,1.3fr) minmax(190px,1fr) minmax(240px,1.4fr) 220px" }}>
               <span>Боец</span><span>Звание (роль)</span><span>Командные роли</span><span></span>
             </div>
             {rows.map((r) => (

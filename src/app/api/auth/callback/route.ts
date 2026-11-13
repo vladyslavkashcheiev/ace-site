@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { exchangeCode, fetchMe, fetchMemberRoles, siteUrl } from "@/lib/discord";
-import { resolveAccess } from "@/lib/access";
+import { accessFor } from "@/lib/admins";
 import { getProfile } from "@/lib/db";
 import { createSessionToken, SESSION_COOKIE } from "@/lib/session";
 
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const token = await exchangeCode(code);
     const me = await fetchMe(token);
     const member = await fetchMemberRoles(me.id);
-    const { access, rankNum } = resolveAccess(me.id, member?.roles ?? null);
+    const { access, rankNum } = await accessFor(me.id, member?.roles ?? null);
 
     let profile = null;
     try {

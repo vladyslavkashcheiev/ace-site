@@ -27,7 +27,7 @@ export default function MemberRow({ id, name, sub, avatar, rankNum, ranks, staff
       const res = await fetch("/api/admin/member", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ userId: id, op, value, reason: why }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Ошибка");
-      setMsg({ t: "Готово — роли в Discord обновлены", ok: true });
+      setMsg({ t: op === "resetCooldown" ? "КД сброшен — можно подавать отчёт" : "Готово — роли в Discord обновлены", ok: true });
       setFiring(false);
       setReason("");
       router.refresh();
@@ -39,7 +39,7 @@ export default function MemberRow({ id, name, sub, avatar, rankNum, ranks, staff
   }
 
   return (
-    <div className="trow" style={{ gridTemplateColumns: "minmax(200px,1.3fr) minmax(190px,1fr) minmax(260px,1.6fr) 120px", alignItems: "center" }}>
+    <div className="trow" style={{ gridTemplateColumns: "minmax(200px,1.3fr) minmax(190px,1fr) minmax(240px,1.4fr) 220px", alignItems: "center" }}>
       <span style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={avatar} alt="" width={34} height={34} style={{ border: "1px solid var(--line-3)" }} />
@@ -60,7 +60,8 @@ export default function MemberRow({ id, name, sub, avatar, rankNum, ranks, staff
           </button>
         ))}
       </span>
-      <span style={{ textAlign: "right" }}>
+      <span style={{ textAlign: "right", display: "flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
+        <button type="button" className="chip" style={{ minHeight: 36, padding: "0 10px" }} disabled={busy} onClick={() => call("resetCooldown")} title="Разрешить подать отчёт сразу, без ожидания 48 ч">Сбросить КД</button>
         {!isAdmin && !firing && <button type="button" className="chip" style={{ minHeight: 36, borderColor: "var(--red-bg)", color: "var(--red)" }} disabled={busy} onClick={() => setFiring(true)}>Уволить</button>}
       </span>
       {firing && (

@@ -4,6 +4,7 @@ import { fetchMemberRoles, postErrorText, publish } from "@/lib/discord";
 import { reportButtons } from "@/lib/review";
 import { resolveAccess } from "@/lib/access";
 import { db, getProfile } from "@/lib/db";
+import { cooldownSince } from "@/lib/admins";
 import { ACTIVITIES, requirementFrom, sumPoints } from "@/lib/ranks";
 import { CHANNELS, PROMOTION_MENTIONS } from "@/config/discord";
 
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
   if (!Array.isArray(body.checks) || body.checks.length !== 5 || !body.checks.every(Boolean)) return fail("Отметь все пункты чек-листа.");
 
   // КД 48 часов между отчётами.
-  const since = new Date(Date.now() - 48 * 3600e3).toISOString();
+  const since = await cooldownSince(s.id);
   const { data: recent, error: recentErr } = await db()
     .from("promotion_reports")
     .select("created_at")

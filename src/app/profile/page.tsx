@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireAce } from "@/lib/guard";
+import { cooldownSince } from "@/lib/admins";
 import { ACCESS_LABEL, atLeast } from "@/lib/access";
 import { avatarUrl, fetchGuildRoleNames } from "@/lib/discord";
 import { RANK_ROLES, STAFF_ROLES, ACE_MEMBER_ROLE } from "@/config/discord";
@@ -30,7 +31,9 @@ export default async function Profile() {
   const known = new Set<string>([...RANK_ROLES.map((r) => r.id), ...Object.values(STAFF_ROLES), ACE_MEMBER_ROLE].filter(Boolean));
   const rank = s.rankNum;
   const req = rank ? requirementFrom(rank) : null;
-  const lastAt = reports[0] ? new Date(reports[0].created_at).getTime() : 0;
+  const cdSince = new Date(await cooldownSince(s.id).catch(() => new Date(0).toISOString())).getTime();
+  const lastOk = reports.find((r) => r.status !== "rejected" && new Date(r.created_at).getTime() >= cdSince);
+  const lastAt = lastOk ? new Date(lastOk.created_at).getTime() : 0;
   const hoursLeft = Math.max(0, Math.ceil((lastAt + 48 * 3600e3 - Date.now()) / 3600e3));
 
   return (
