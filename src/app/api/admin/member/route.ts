@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     if (!p0) return fail("Боец ещё не заходил на сайт — КД у него нет.");
     const { error } = await db().from("profiles").update({ cooldown_reset_at: new Date().toISOString() }).eq("discord_id", userId);
     if (error) return fail("Ошибка базы: выполни supabase/stage3.sql.", 500);
-    await audit(actor, "Сбросил КД отчёта", { id: userId, name: p0.ic_name }, reason || undefined);
+    await audit(actor, "Сбросил КД (отчёт и аттестация)", { id: userId, name: p0.ic_name }, reason || undefined);
     return NextResponse.json({ ok: true });
   }
 

@@ -4,6 +4,7 @@ import { fetchMemberRoles, postErrorText, publish } from "@/lib/discord";
 import { examButtons } from "@/lib/review";
 import { resolveAccess } from "@/lib/access";
 import { db, getProfile } from "@/lib/db";
+import { cooldownSince } from "@/lib/admins";
 import { EXAMS, rankName } from "@/lib/ranks";
 import { CHANNELS, STAFF_ROLES } from "@/config/discord";
 
@@ -33,9 +34,9 @@ export async function POST(req: NextRequest) {
   if (!time) return fail("Укажи удобное время.");
   const comment = String(body.comment ?? "").trim().slice(0, 300);
 
-  const since = new Date(Date.now() - 3600e3).toISOString();
-  const { data: recent } = await db().from("exam_requests").select("id").eq("discord_id", s.id).gte("created_at", since).limit(1);
-  if (recent && recent.length) return fail("Ты уже подавал заявку в течение часа. Дождись ответа инструктора.", 429);
+  const since = await cooldownSince(s.id, 1);
+  const { data: recent } = await db().from("exam_requests").select("id").eq("discord_id", s.id).gte("created_at", since).neq("status", "rejected").limit(1);
+  if (recent && recent.length) return fail("Ты уже подавал заявку в течение часа. Дождись ответа инструктора или попроси администратора сбросить КД.", 429);
 
   // Формат как в канале: 1) ник 2) с какого на какой порядковый 3) время + отметка инструкторов
   const content = [
