@@ -86,8 +86,22 @@ export async function postToChannel(
       ...(opts.replyTo ? { message_reference: { message_id: opts.replyTo, fail_if_not_exists: false } } : {}),
     }),
   });
-  if (!res.ok) throw new Error(`Discord post: ${res.status} ${await res.text()}`);
+  if (!res.ok) {
+    const t = await res.text();
+    if (res.status === 403 || res.status === 404)
+      throw new Error(`NO_CHANNEL_ACCESS:${channelId}:${t.slice(0, 120)}`);
+    throw new Error(`Discord post: ${res.status} ${t}`);
+  }
   return (await res.json()) as { id: string };
+}
+
+/** Человекочитаемая причина, почему бот не смог написать в канал. */
+export function postErrorText(e: unknown, channelName: string) {
+  const m = (e as Error)?.message ?? "";
+  if (m.startsWith("NO_CHANNEL_ACCESS"))
+    return `Бот не может писать в канал ${channelName}. В настройках канала → Права доступа добавь роль «ACE Портал» и разреши: Просмотр канала, Отправка сообщений, Упоминание всех ролей.`;
+  if (m.includes("BOT_TOKEN")) return "На сайте не настроен токен бота (DISCORD_BOT_TOKEN).";
+  return "Не удалось отправить в Discord. Попробуй позже.";
 }
 
 export type GuildMember = { id: string; username: string; globalName: string | null; nick: string | null; avatar: string | null; roles: string[] };

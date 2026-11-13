@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "@/lib/session";
-import { fetchMemberRoles, postToChannel } from "@/lib/discord";
+import { fetchMemberRoles, postErrorText, postToChannel } from "@/lib/discord";
 import { resolveAccess } from "@/lib/access";
 import { db, getProfile } from "@/lib/db";
 import { ACTIVITIES, requirementFrom, sumPoints } from "@/lib/ranks";
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     messageId = (await postToChannel(CHANNELS.promotionReports, content, PROMOTION_MENTIONS)).id;
   } catch (e) {
     console.error(e);
-    return fail("Не удалось отправить в Discord. Попробуй позже.", 502);
+    return fail(postErrorText(e, "🗃️-отчет-на-повышение"), 502);
   }
 
   const { error } = await db().from("promotion_reports").insert({

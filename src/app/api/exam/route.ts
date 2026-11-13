@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "@/lib/session";
-import { fetchMemberRoles, postToChannel } from "@/lib/discord";
+import { fetchMemberRoles, postErrorText, postToChannel } from "@/lib/discord";
 import { resolveAccess } from "@/lib/access";
 import { db, getProfile } from "@/lib/db";
 import { EXAMS, rankName } from "@/lib/ranks";
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     messageId = (await postToChannel(CHANNELS.examSignup, content, [STAFF_ROLES.instructor])).id;
   } catch (e) {
     console.error(e);
-    return fail("Не удалось отправить в Discord. Попробуй позже.", 502);
+    return fail(postErrorText(e, "✉️┃заявка-на-аттестацию"), 502);
   }
 
   const { error } = await db().from("exam_requests").insert({

@@ -186,3 +186,16 @@ a.tile:hover { color: var(--text); border-left-color: var(--gold); }
   .pad { padding: 18px; }
   .hero { padding: 48px 0; }
 }
+
+/* Нативные выбор даты/времени (на iPhone — барабаны как в будильнике) */
+.inp.picker { font-family: var(--font-head); font-size: 20px; letter-spacing: 0.04em; color: var(--gold-2); min-height: 56px; -webkit-appearance: none; appearance: none; }
+.inp.picker::-webkit-calendar-picker-indicator { filter: invert(78%) sepia(30%) saturate(500%) hue-rotate(5deg); cursor: pointer; opacity: 0.9; }
+.inp.picker::-webkit-date-and-time-value { text-align: left; }
+
+/* Шапка на телефоне компактнее */
+@media (max-width: 760px) {
+  .hdr-in { gap: 8px 16px; padding: 10px 16px; }
+  .nav { gap: 4px 14px; order: 3; width: 100%; }
+  .navlink { font-size: 12px; padding: 8px 0; }
+  .logo small { display: none; }
+}
