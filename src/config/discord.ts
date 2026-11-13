@@ -3,6 +3,8 @@
 export const GUILD_ID = "1491358095308361798";
 export const CLIENT_ID = process.env.DISCORD_CLIENT_ID ?? "1570509111806791812";
 export const ADMIN_USER_ID = "548009754698448897";
+/** Публичный ключ приложения (Developer Portal → Общая информация). Не секрет. */
+export const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY ?? "7e9964048d45ce331b4f0bc09cc1909fcdd187eaf5b8d57138cbcc20ab4d7102";
 
 export const STAFF_ROLES = {
   curator: "1491389589158363147", // Cur.ACE

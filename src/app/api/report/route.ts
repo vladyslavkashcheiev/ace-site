@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "@/lib/session";
 import { fetchMemberRoles, postErrorText, publish } from "@/lib/discord";
+import { reportButtons } from "@/lib/review";
 import { resolveAccess } from "@/lib/access";
 import { db, getProfile } from "@/lib/db";
 import { ACTIVITIES, requirementFrom, sumPoints } from "@/lib/ranks";
@@ -74,24 +75,24 @@ export async function POST(req: NextRequest) {
     `5.${PROMOTION_MENTIONS.map((r) => `<@&${r}>`).join(" ")}`,
   ].join("\n");
 
-  let messageId: string | null = null;
-  try {
-    messageId = await publish(CHANNELS.promotionReports, `${profile.ic_name} | ${rankNum}->${rankNum + 1} | ${total} б.`, content, PROMOTION_MENTIONS);
-  } catch (e) {
-    console.error(e);
-    return fail(postErrorText(e, "🗃️-отчет-на-повышение"), 502);
+  const { data: row, error: insErr } = await db()
+    .from("promotion_reports")
+    .insert({ discord_id: s.id, from_rank: rankNum, to_rank: rankNum + 1, points: total, breakdown, proof })
+    .select("id")
+    .single();
+  if (insErr || !row) {
+    console.error(insErr);
+    return fail("Ошибка базы, попробуй ещё раз.", 500);
   }
 
-  const { error } = await db().from("promotion_reports").insert({
-    discord_id: s.id,
-    from_rank: rankNum,
-    to_rank: rankNum + 1,
-    points: total,
-    breakdown,
-    proof,
-    discord_message_id: messageId,
-  });
-  if (error) console.error("report insert failed", error);
+  try {
+    const messageId = await publish(CHANNELS.promotionReports, `${profile.ic_name} | ${rankNum}->${rankNum + 1} | ${total} б.`, content, PROMOTION_MENTIONS, reportButtons(row.id));
+    await db().from("promotion_reports").update({ discord_message_id: messageId }).eq("id", row.id);
+  } catch (e) {
+    console.error(e);
+    await db().from("promotion_reports").delete().eq("id", row.id);
+    return fail(postErrorText(e, "отчетов на повышение"), 502);
+  }
 
   return NextResponse.json({ ok: true, from: rankNum, to: rankNum + 1, total });
 }

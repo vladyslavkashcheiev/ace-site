@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "@/lib/session";
 import { fetchMemberRoles, postErrorText, publish } from "@/lib/discord";
+import { examButtons } from "@/lib/review";
 import { resolveAccess } from "@/lib/access";
 import { db, getProfile } from "@/lib/db";
 import { EXAMS, rankName } from "@/lib/ranks";
@@ -49,22 +50,24 @@ export async function POST(req: NextRequest) {
     .filter(Boolean)
     .join("\n");
 
-  let messageId: string | null = null;
-  try {
-    messageId = await publish(CHANNELS.examSignup, `${profile.ic_name} | ${exam.label} | ${time}`, content, [STAFF_ROLES.instructor]);
-  } catch (e) {
-    console.error(e);
-    return fail(postErrorText(e, "✉️┃заявка-на-аттестацию"), 502);
+  const { data: row, error: insErr } = await db()
+    .from("exam_requests")
+    .insert({ discord_id: s.id, exam: exam.label, preferred_time: time, comment: comment || null })
+    .select("id")
+    .single();
+  if (insErr || !row) {
+    console.error(insErr);
+    return fail("Ошибка базы, попробуй ещё раз.", 500);
   }
 
-  const { error } = await db().from("exam_requests").insert({
-    discord_id: s.id,
-    exam: exam.label,
-    preferred_time: time,
-    comment: comment || null,
-    discord_message_id: messageId,
-  });
-  if (error) console.error("exam insert failed", error);
+  try {
+    const messageId = await publish(CHANNELS.examSignup, `${profile.ic_name} | ${exam.label} | ${time}`, content, [STAFF_ROLES.instructor], examButtons(row.id, "pending"));
+    await db().from("exam_requests").update({ discord_message_id: messageId }).eq("id", row.id);
+  } catch (e) {
+    console.error(e);
+    await db().from("exam_requests").delete().eq("id", row.id);
+    return fail(postErrorText(e, "✉️┃заявка-на-аттестацию"), 502);
+  }
 
   return NextResponse.json({ ok: true });
 }

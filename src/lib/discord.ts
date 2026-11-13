@@ -75,7 +75,7 @@ export async function postToChannel(
   channelId: string,
   content: string,
   pingRoles: string[] = [],
-  opts: { replyTo?: string | null; pingUsers?: string[] } = {},
+  opts: { replyTo?: string | null; pingUsers?: string[]; components?: unknown[] } = {},
 ) {
   const res = await fetch(`${API}/channels/${channelId}/messages`, {
     method: "POST",
@@ -84,6 +84,7 @@ export async function postToChannel(
       content: content.slice(0, 2000),
       allowed_mentions: { parse: [], roles: pingRoles, users: opts.pingUsers ?? [], replied_user: false },
       ...(opts.replyTo ? { message_reference: { message_id: opts.replyTo, fail_if_not_exists: false } } : {}),
+      ...(opts.components?.length ? { components: opts.components } : {}),
     }),
   });
   if (!res.ok) {
@@ -110,7 +111,7 @@ async function channelType(channelId: string): Promise<number> {
  * Публикует в канал. Если канал — форум (как «отчет-на-повышение»), создаёт отдельную ветку с заголовком.
  * Возвращает ссылку для ответов: "thread:<id>" для ветки или id сообщения для обычного канала.
  */
-export async function publish(channelId: string, title: string, content: string, pingRoles: string[] = []): Promise<string> {
+export async function publish(channelId: string, title: string, content: string, pingRoles: string[] = [], components: unknown[] = []): Promise<string> {
   const type = await channelType(channelId);
   if (type === 15 || type === 16) {
     const res = await fetch(`${API}/channels/${channelId}/threads`, {
@@ -118,7 +119,7 @@ export async function publish(channelId: string, title: string, content: string,
       headers: botHeaders(),
       body: JSON.stringify({
         name: title.slice(0, 100),
-        message: { content: content.slice(0, 2000), allowed_mentions: { parse: [], roles: pingRoles } },
+        message: { content: content.slice(0, 2000), allowed_mentions: { parse: [], roles: pingRoles }, components },
       }),
     });
     if (!res.ok) {
@@ -128,13 +129,28 @@ export async function publish(channelId: string, title: string, content: string,
     }
     return `thread:${((await res.json()) as { id: string }).id}`;
   }
-  return (await postToChannel(channelId, content, pingRoles)).id;
+  return (await postToChannel(channelId, content, pingRoles, { components })).id;
 }
 
 /** Ответ на публикацию: в ветку форума или реплаем на сообщение в обычном канале. */
 export async function replyTo(channelId: string, ref: string | null, content: string, pingUsers: string[] = []) {
   if (ref?.startsWith("thread:")) return postToChannel(ref.slice(7), content, [], { pingUsers });
   return postToChannel(channelId, content, [], { replyTo: ref, pingUsers });
+}
+
+/** Дописывает строку-итог к исходному сообщению и заменяет/убирает кнопки. */
+export async function finalizeMessage(channelId: string, ref: string | null, line: string, components: unknown[] = []) {
+  if (!ref) return;
+  const [ch, msg] = ref.startsWith("thread:") ? [ref.slice(7), ref.slice(7)] : [channelId, ref];
+  const get = await fetch(`${API}/channels/${ch}/messages/${msg}`, { headers: botHeaders(), cache: "no-store" });
+  if (!get.ok) return;
+  const m = (await get.json()) as { content: string };
+  const base = m.content.replace(/\n\n(✅|❌|🗓️) \*\*[\s\S]*$/, "");
+  await fetch(`${API}/channels/${ch}/messages/${msg}`, {
+    method: "PATCH",
+    headers: botHeaders(),
+    body: JSON.stringify({ content: `${base}\n\n${line}`.slice(0, 2000), components, allowed_mentions: { parse: [] } }),
+  });
 }
 
 /** Человекочитаемая причина, почему бот не смог написать в канал. */
