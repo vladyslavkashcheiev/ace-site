@@ -36,14 +36,15 @@ export async function POST(req: NextRequest) {
   const { data: recent } = await db().from("exam_requests").select("id").eq("discord_id", s.id).gte("created_at", since).limit(1);
   if (recent && recent.length) return fail("Ты уже подавал заявку в течение часа. Дождись ответа инструктора.", 429);
 
+  // Формат как в канале: 1) ник 2) с какого на какой порядковый 3) время + отметка инструкторов
   const content = [
-    `**Заявка на аттестацию** · <@${s.id}>`,
-    `ФИО и паспорт: ${profile.ic_name} | ${profile.passport}`,
-    `Звание: ${rankNum ? `${rankNum}. ${rankName(rankNum)}` : "—"}`,
-    `Экзамен: ${exam.label} (${exam.desc})`,
-    `Удобное время: ${time}`,
+    `1) Ваш ник: ${profile.ic_name}`,
+    `2) с какого на какой порядковый: ${rankNum ? `${rankNum}-${rankNum + 1}` : "—"}`,
+    `3) время прохождения аттестации: ${time}`,
+    exam.id === "drive" ? `Экзамен: ${exam.label}` : null,
     comment ? `Комментарий: ${comment}` : null,
     `<@&${STAFF_ROLES.instructor}>`,
+    `-# заявка с сайта · <@${s.id}> · паспорт ${profile.passport}`,
   ]
     .filter(Boolean)
     .join("\n");
