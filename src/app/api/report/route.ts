@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "@/lib/session";
-import { fetchMemberRoles, postErrorText, postToChannel } from "@/lib/discord";
+import { fetchMemberRoles, postErrorText, publish } from "@/lib/discord";
 import { resolveAccess } from "@/lib/access";
 import { db, getProfile } from "@/lib/db";
 import { ACTIVITIES, requirementFrom, sumPoints } from "@/lib/ranks";
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
 
   let messageId: string | null = null;
   try {
-    messageId = (await postToChannel(CHANNELS.promotionReports, content, PROMOTION_MENTIONS)).id;
+    messageId = await publish(CHANNELS.promotionReports, `${profile.ic_name} | ${rankNum}->${rankNum + 1} | ${total} б.`, content, PROMOTION_MENTIONS);
   } catch (e) {
     console.error(e);
     return fail(postErrorText(e, "🗃️-отчет-на-повышение"), 502);

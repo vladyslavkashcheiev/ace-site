@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { apiActor, audit, rankRoleFor, setRankRole } from "@/lib/staff";
 import { db } from "@/lib/db";
-import { fetchMemberRoles, postToChannel } from "@/lib/discord";
+import { fetchMemberRoles, replyTo } from "@/lib/discord";
 import { resolveAccess } from "@/lib/access";
 import { rankName } from "@/lib/ranks";
 import { CHANNELS } from "@/config/discord";
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     status === "approved"
       ? `✅ **Одобрено** · <@${r.discord_id}> повышен: ${r.from_rank}->${r.to_rank} (${rankName(r.to_rank)}). Рассмотрел: ${actor.name}${note ? `\nКомментарий: ${note}` : ""}`
       : `❌ **Отклонено** · <@${r.discord_id}>, отчёт ${r.from_rank}->${r.to_rank}. Рассмотрел: ${actor.name}\nПричина: ${note}`;
-  await postToChannel(CHANNELS.promotionReports, text, [], { replyTo: r.discord_message_id, pingUsers: [r.discord_id] }).catch((e) => console.error(e));
+  await replyTo(CHANNELS.promotionReports, r.discord_message_id, text, [r.discord_id]).catch((e) => console.error(e));
 
   await audit(actor, status === "approved" ? "Одобрил повышение" : "Отклонил отчёт", { id: r.discord_id, name }, `${r.from_rank}→${r.to_rank}, ${r.points} б.${note ? ` · ${note}` : ""}`);
   return NextResponse.json({ ok: true, roleNote });

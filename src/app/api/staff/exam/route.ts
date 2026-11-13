@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { apiActor, audit } from "@/lib/staff";
 import { db } from "@/lib/db";
-import { postToChannel } from "@/lib/discord";
+import { publish, replyTo } from "@/lib/discord";
 import { CHANNELS } from "@/config/discord";
 
 const fail = (error: string, status = 400) => NextResponse.json({ error }, { status });
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const t = step.to === "accepted"
       ? `🗓️ **Запись подтверждена** · <@${e.discord_id}> — ${e.exam}, ${e.preferred_time}. Экзаменатор: ${actor.name}${note ? `\n${note}` : ""}`
       : `❌ **Заявка отклонена** · <@${e.discord_id}> — ${e.exam}. ${actor.name}: ${note}`;
-    await postToChannel(CHANNELS.examSignup, t, [], { replyTo: e.discord_message_id, pingUsers: [e.discord_id] }).catch((x) => console.error(x));
+    await replyTo(CHANNELS.examSignup, e.discord_message_id, t, [e.discord_id]).catch((x) => console.error(x));
   } else {
     const t = [
       `**Отчёт экзаменации** · ${step.to === "passed" ? "✅ СДАЛ" : "❌ НЕ СДАЛ"}`,
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       `Экзаменатор: ${actor.name}`,
       note ? `Комментарий: ${note}` : null,
     ].filter(Boolean).join("\n");
-    await postToChannel(CHANNELS.examResults, t, [], { pingUsers: [e.discord_id] }).catch((x) => console.error(x));
+    await publish(CHANNELS.examResults, `${p?.ic_name ?? "Боец"} | ${e.exam} | ${step.to === "passed" ? "сдал" : "не сдал"}`, t).catch((x) => console.error(x));
   }
 
   await audit(actor, step.label, { id: e.discord_id, name: p?.ic_name ?? e.discord_id }, `${e.exam}${note ? ` · ${note}` : ""}`);

@@ -95,11 +95,53 @@ export async function postToChannel(
   return (await res.json()) as { id: string };
 }
 
+const channelTypes = new Map<string, number>();
+async function channelType(channelId: string): Promise<number> {
+  const cached = channelTypes.get(channelId);
+  if (cached !== undefined) return cached;
+  const res = await fetch(`${API}/channels/${channelId}`, { headers: botHeaders(), cache: "no-store" });
+  if (!res.ok) throw new Error(`NO_CHANNEL_ACCESS:${channelId}:${res.status}`);
+  const t = ((await res.json()) as { type: number }).type;
+  channelTypes.set(channelId, t);
+  return t;
+}
+
+/**
+ * Публикует в канал. Если канал — форум (как «отчет-на-повышение»), создаёт отдельную ветку с заголовком.
+ * Возвращает ссылку для ответов: "thread:<id>" для ветки или id сообщения для обычного канала.
+ */
+export async function publish(channelId: string, title: string, content: string, pingRoles: string[] = []): Promise<string> {
+  const type = await channelType(channelId);
+  if (type === 15 || type === 16) {
+    const res = await fetch(`${API}/channels/${channelId}/threads`, {
+      method: "POST",
+      headers: botHeaders(),
+      body: JSON.stringify({
+        name: title.slice(0, 100),
+        message: { content: content.slice(0, 2000), allowed_mentions: { parse: [], roles: pingRoles } },
+      }),
+    });
+    if (!res.ok) {
+      const t = await res.text();
+      if (res.status === 403 || res.status === 404) throw new Error(`NO_CHANNEL_ACCESS:${channelId}:${t.slice(0, 120)}`);
+      throw new Error(`Discord forum post: ${res.status} ${t}`);
+    }
+    return `thread:${((await res.json()) as { id: string }).id}`;
+  }
+  return (await postToChannel(channelId, content, pingRoles)).id;
+}
+
+/** Ответ на публикацию: в ветку форума или реплаем на сообщение в обычном канале. */
+export async function replyTo(channelId: string, ref: string | null, content: string, pingUsers: string[] = []) {
+  if (ref?.startsWith("thread:")) return postToChannel(ref.slice(7), content, [], { pingUsers });
+  return postToChannel(channelId, content, [], { replyTo: ref, pingUsers });
+}
+
 /** Человекочитаемая причина, почему бот не смог написать в канал. */
 export function postErrorText(e: unknown, channelName: string) {
   const m = (e as Error)?.message ?? "";
   if (m.startsWith("NO_CHANNEL_ACCESS"))
-    return `Бот не может писать в канал ${channelName}. В настройках канала → Права доступа добавь роль «ACE Портал» и разреши: Просмотр канала, Отправка сообщений, Упоминание всех ролей.`;
+    return `Бот не может писать в канал ${channelName}. В настройках канала → Права доступа добавь роль «ACE Портал» и разреши: Просматривать канал, Отправлять сообщения, Отправлять сообщения в ветках, Создавать публичные ветки, Упоминать все роли.`;
   if (m.includes("BOT_TOKEN")) return "На сайте не настроен токен бота (DISCORD_BOT_TOKEN).";
   return "Не удалось отправить в Discord. Попробуй позже.";
 }
