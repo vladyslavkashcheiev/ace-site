@@ -266,3 +266,9 @@ a.tile:hover { color: var(--text); border-left-color: var(--gold); }
 .law-tag.red { border-color: var(--red); color: var(--red); }
 .law-crumb { all: unset; cursor: pointer; font-size: 13px; letter-spacing: 0.06em; color: var(--gold-2); }
 .law-crumb:hover { color: var(--gold); text-decoration: underline; }
+.mapbox.v2 { aspect-ratio: 1068 / 723; }
+.mapbox.v2 img { filter: none; }
+.pin .ring { display: block; width: 34px; height: 34px; border-radius: 50%; border: 2px solid transparent; transition: all 0.2s; }
+.pin:hover .ring { border-color: var(--c); box-shadow: 0 0 14px var(--c); }
+.pin.on .ring { border-color: var(--c); box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.5), 0 0 22px var(--c); animation: pinpulse 1.6s ease-in-out infinite; }
+@keyframes pinpulse { 50% { transform: scale(1.25); } }

@@ -8,17 +8,16 @@ export default function MapView() {
   return (
     <div className="split">
       <div className="main stack" style={{ gap: 12 }}>
-        <div className="mapbox">
+        <div className="mapbox v2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/fz-map.png" alt="Карта Fort Zancudo" />
           {places.map((p) => (
             <button key={p.id} type="button" aria-label={p.name} className={"pin" + (p.id === sel ? " on" : "")} style={{ left: `${p.x}%`, top: `${p.y}%` }} onClick={() => setSel(p.id)}>
-              <span className="dot"><span>{p.short}</span></span>
-              <span className="tip">{p.name}</span>
+              <span className="ring" style={{ ["--c" as string]: p.color }} />
             </button>
           ))}
         </div>
-        <span className="muted" style={{ fontSize: 14 }}>Наведи на ромб — увидишь название, нажми — описание и коды справа.</span>
+        <span className="muted" style={{ fontSize: 14 }}>Нажми на точку на карте или на название справа — появится описание.</span>
       </div>
       <div className="side stack">
         <div className="panel pad stack" style={{ borderColor: "var(--gold)", gap: 14 }}>
@@ -37,7 +36,7 @@ export default function MapView() {
         </div>
         <div className="stack" style={{ gap: 6 }}>
           {places.map((p) => (
-            <button key={p.id} type="button" className={"leg" + (p.id === sel ? " on" : "")} onClick={() => setSel(p.id)}><b>{p.short}</b>{p.name}</button>
+            <button key={p.id} type="button" className={"leg" + (p.id === sel ? " on" : "")} onClick={() => setSel(p.id)}><b style={{ color: p.color, fontSize: 20 }}>●</b>{p.name}</button>
           ))}
         </div>
       </div>
