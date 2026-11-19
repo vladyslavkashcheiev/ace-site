@@ -6,6 +6,8 @@ import { ACE_MEMBER_ROLE, GROUP_ROLES, RANK_ROLES, STAFF_ROLES } from "@/config/
 import MemberRow from "./MemberRow";
 import AddMember from "./AddMember";
 import Admins from "./Admins";
+import MaintenanceToggle from "./MaintenanceToggle";
+import { getMaintenance } from "@/lib/settings";
 import { ADMIN_USER_ID } from "@/config/discord";
 
 export const metadata = { title: "Админ-панель — ACE" };
@@ -33,6 +35,7 @@ export default async function Admin() {
   const ace = members.filter((m) => m.roles.some((r) => aceIds.has(r)));
 
   const ids = ace.map((m) => m.id);
+  const maint = await getMaintenance();
   const { data: adminRows } = await db().from("site_admins").select("discord_id, name, added_by_name").order("created_at");
   const extraAdmins = new Set((adminRows ?? []).map((a) => a.discord_id));
   const [{ data: profiles }, { data: log }] = await Promise.all([
@@ -66,6 +69,8 @@ export default async function Admin() {
         <h1 style={{ fontSize: 40 }}>Админ-панель</h1>
         <p className="lead">Звания, командные роли, приём и увольнение. Всё сразу меняется в Discord и записывается в журнал.</p>
       </div>
+
+      <MaintenanceToggle on={maint.on} message={maint.message} by={maint.by} at={maint.at} />
 
       {loadError && (
         <div className="err">

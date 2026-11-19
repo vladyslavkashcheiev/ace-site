@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSession } from "@/lib/session";
+import { maintenanceBlocked } from "@/lib/settings";
 import { fetchMemberRoles, postErrorText, publish } from "@/lib/discord";
 import { reportButtons } from "@/lib/review";
 import { resolveAccess } from "@/lib/access";
@@ -13,6 +14,7 @@ const fail = (error: string, status = 400) => NextResponse.json({ error }, { sta
 export async function POST(req: NextRequest) {
   const s = await getSession();
   if (!s) return fail("Сначала войди через Discord.", 401);
+  if (await maintenanceBlocked(s.access)) return fail("На сайте идёт техническое обслуживание. Попробуй позже.", 503);
 
   let body: { counts?: Record<string, number>; proof?: string; checks?: boolean[] };
   try {

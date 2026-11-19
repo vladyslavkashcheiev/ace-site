@@ -199,3 +199,48 @@ a.tile:hover { color: var(--text); border-left-color: var(--gold); }
   .navlink { font-size: 12px; padding: 8px 0; }
   .logo small { display: none; }
 }
+
+/* ---------- Техническое обслуживание ---------- */
+.mt-wrap { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 32px 16px; overflow: hidden; }
+.mt-bg { position: absolute; inset: -20px; background: url("/maint-barracks.jpg") center / cover no-repeat; filter: blur(14px) brightness(0.28) saturate(0.7); }
+.mt-card { position: relative; width: 100%; max-width: 920px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 36px 28px 30px; background: rgba(15, 18, 12, 0.82); border: 1px solid var(--line-2); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); }
+.mt-logo { display: flex; align-items: center; gap: 14px; text-align: left; }
+.mt-logo b { display: block; font-family: var(--font-head); font-weight: 400; font-size: 24px; letter-spacing: 0.14em; }
+.mt-logo small { font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted-2); }
+.mt-scene { width: 100%; max-width: 760px; margin: 8px 0 4px; }
+.mt-eyebrow { display: inline-flex; align-items: center; gap: 10px; }
+.mt-title { font-size: clamp(30px, 6vw, 56px); line-height: 1.05; letter-spacing: 0.03em; color: var(--gold-2); }
+.mt-sub { margin: 0; font-size: 19px; color: var(--text-2); }
+.mt-msg { margin: 0; max-width: 620px; padding: 12px 16px; border: 1px dashed #4a5536; color: var(--muted); font-size: 16px; line-height: 1.5; }
+.mt-dots i { font-style: normal; animation: mt-dot 1.4s infinite; opacity: 0; }
+.mt-dots i:nth-child(2) { animation-delay: 0.2s; }
+.mt-dots i:nth-child(3) { animation-delay: 0.4s; }
+@keyframes mt-dot { 30%, 60% { opacity: 1; } 100% { opacity: 0; } }
+.mt-bar { width: min(420px, 100%); height: 6px; background: var(--line); overflow: hidden; position: relative; margin-top: 6px; }
+.mt-bar span { position: absolute; top: 0; bottom: 0; width: 35%; background: var(--gold); animation: mt-bar 1.8s ease-in-out infinite; }
+@keyframes mt-bar { 0% { left: -35%; } 100% { left: 100%; } }
+.mt-admin { margin-top: 10px; font-family: var(--font-head); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); text-decoration: none; }
+.mt-admin:hover { color: var(--gold-2); }
+
+/* анимация замены колеса: цикл 7 с */
+.mt-truck, .mt-front, .mt-jack, .mt-old, .mt-new, .mt-spin-old, .mt-spin-new, .mt-wrench { animation-duration: 7s; animation-iteration-count: infinite; animation-timing-function: ease-in-out; }
+.mt-truck { transform-box: view-box; transform-origin: 652px 290px; animation-name: mt-tilt; }
+.mt-front { animation-name: mt-lift; }
+.mt-jack { transform-box: fill-box; transform-origin: 50% 100%; animation-name: mt-jack; }
+.mt-old { animation-name: mt-old; }
+.mt-new { animation-name: mt-new; }
+.mt-spin-old, .mt-spin-new { transform-box: fill-box; transform-origin: 50% 50%; }
+.mt-spin-old { animation-name: mt-spin-old; }
+.mt-spin-new { animation-name: mt-spin-new; }
+.mt-wrench { transform-box: view-box; transform-origin: 180px 290px; animation-name: mt-wrench; }
+@keyframes mt-tilt { 0%, 8% { transform: rotate(0); } 16%, 82% { transform: rotate(-2deg); } 90%, 100% { transform: rotate(0); } }
+@keyframes mt-lift { 0%, 8% { transform: translateY(0); } 16%, 82% { transform: translateY(-17px); } 90%, 100% { transform: translateY(0); } }
+@keyframes mt-jack { 0%, 6% { transform: scaleY(0.4); } 16%, 82% { transform: scaleY(1); } 92%, 100% { transform: scaleY(0.4); } }
+@keyframes mt-old { 0%, 20% { transform: translateX(0); opacity: 1; } 38% { transform: translateX(-520px); opacity: 1; } 39%, 100% { transform: translateX(-520px); opacity: 0; } }
+@keyframes mt-spin-old { 0%, 20% { transform: rotate(0); } 38%, 100% { transform: rotate(-640deg); } }
+@keyframes mt-new { 0%, 40% { transform: translateX(-520px); opacity: 0; } 41% { transform: translateX(-520px); opacity: 1; } 58%, 100% { transform: translateX(0); opacity: 1; } }
+@keyframes mt-spin-new { 0%, 41% { transform: rotate(-640deg); } 58%, 100% { transform: rotate(0); } }
+@keyframes mt-wrench { 0%, 58% { opacity: 0; transform: rotate(0); } 60% { opacity: 1; transform: rotate(0); } 64% { transform: rotate(-55deg); } 68% { transform: rotate(0); } 72% { transform: rotate(-55deg); } 76% { opacity: 1; transform: rotate(0); } 78%, 100% { opacity: 0; transform: rotate(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .mt-truck, .mt-front, .mt-jack, .mt-old, .mt-new, .mt-spin-old, .mt-spin-new, .mt-wrench, .mt-bar span, .mt-dots i { animation-duration: 20s; }
+}
