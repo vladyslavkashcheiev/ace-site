@@ -10,7 +10,7 @@ export type LiveCheck = { ok: boolean; inGuild: boolean; roles: string[]; error?
 export async function liveAccess(s: Session): Promise<{ session: Session; check: LiveCheck }> {
   try {
     const m = await fetchMemberRoles(s.id);
-    const { access, rankNum } = await accessFor(s.id, m?.roles ?? null);
+    const { access, rankNum } = await accessFor(s.id, m?.roles ?? null, m?.nick);
     return { session: { ...s, access, rankNum }, check: { ok: true, inGuild: !!m, roles: m?.roles ?? [] } };
   } catch (e) {
     return { session: s, check: { ok: false, inGuild: false, roles: [], error: (e as Error).message.slice(0, 200) } };

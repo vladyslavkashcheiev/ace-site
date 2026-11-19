@@ -14,7 +14,13 @@ export const STAFF_ROLES = {
 } as const;
 
 /** Общая роль «ACE» без звания. Пусто = не используется. */
-export const ACE_MEMBER_ROLE: string = process.env.ACE_MEMBER_ROLE_ID ?? "";
+export const ACE_MEMBER_ROLE: string = process.env.ACE_MEMBER_ROLE_ID || "1491389941974958150";
+
+/** Групповые роли ACE: Академия (ранги 1–3) и Рядовой состав (4–10). Тоже означают членство в ACE. */
+export const GROUP_ROLES = {
+  academy: { id: "1572338869636960326", from: 1, to: 3, name: "Академия ACE 1-3" },
+  enlisted: { id: "1572339689879502948", from: 4, to: 10, name: "Рядовой Состав 4-10" },
+} as const;
 
 /** Роли званий ACE. Порядок = старшинство. num — номер ранга в армии. */
 export const RANK_ROLES: { num: number; rank: string; id: string }[] = [

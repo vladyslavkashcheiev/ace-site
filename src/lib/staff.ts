@@ -6,7 +6,7 @@ import { liveAccess } from "./guard";
 import { atLeast, type Access } from "./access";
 import { db } from "./db";
 import { addRole, removeRole } from "./discord";
-import { RANK_ROLES } from "@/config/discord";
+import { GROUP_ROLES, RANK_ROLES } from "@/config/discord";
 
 export async function requireStaff(min: Access, next: string): Promise<Session> {
   const s0 = await getSession();
@@ -49,4 +49,15 @@ export async function setRankRole(userId: string, currentRoles: string[], num: n
     if (currentRoles.includes(r.id) && r.id !== target?.id) await removeRole(userId, r.id, reason);
   }
   if (target && !currentRoles.includes(target.id)) await addRole(userId, target.id, reason);
+  await syncGroupRole(userId, currentRoles, num, reason);
+}
+
+/** Академия ACE (1–3) / Рядовой Состав (4–10): оставляет ровно ту группу, которой соответствует ранг. */
+export async function syncGroupRole(userId: string, currentRoles: string[], num: number | null, reason: string) {
+  for (const g of Object.values(GROUP_ROLES)) {
+    const should = num !== null && num >= g.from && num <= g.to;
+    const has = currentRoles.includes(g.id);
+    if (should && !has) await addRole(userId, g.id, reason);
+    if (!should && has) await removeRole(userId, g.id, reason);
+  }
 }

@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     const token = await exchangeCode(code);
     const me = await fetchMe(token);
     const member = await fetchMemberRoles(me.id);
-    const { access, rankNum } = await accessFor(me.id, member?.roles ?? null);
+    const { access, rankNum } = await accessFor(me.id, member?.roles ?? null, member?.nick);
 
     let profile = null;
     try {

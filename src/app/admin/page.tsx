@@ -2,7 +2,7 @@ import { requireStaff } from "@/lib/staff";
 import { db } from "@/lib/db";
 import { avatarUrl, listGuildMembers, type GuildMember } from "@/lib/discord";
 import { resolveAccess, ACCESS_LABEL } from "@/lib/access";
-import { ACE_MEMBER_ROLE, RANK_ROLES, STAFF_ROLES } from "@/config/discord";
+import { ACE_MEMBER_ROLE, GROUP_ROLES, RANK_ROLES, STAFF_ROLES } from "@/config/discord";
 import MemberRow from "./MemberRow";
 import AddMember from "./AddMember";
 import Admins from "./Admins";
@@ -29,7 +29,7 @@ export default async function Admin() {
   } catch (e) {
     loadError = (e as Error).message;
   }
-  const aceIds = new Set<string>([ACE_MEMBER_ROLE, ...RANK_ROLES.map((r) => r.id), ...Object.values(STAFF_ROLES)].filter(Boolean));
+  const aceIds = new Set<string>([ACE_MEMBER_ROLE, ...RANK_ROLES.map((r) => r.id), ...Object.values(GROUP_ROLES).map((g) => g.id), ...Object.values(STAFF_ROLES)].filter(Boolean));
   const ace = members.filter((m) => m.roles.some((r) => aceIds.has(r)));
 
   const ids = ace.map((m) => m.id);
@@ -43,7 +43,7 @@ export default async function Admin() {
 
   const rows = ace
     .map((m) => {
-      const r0 = resolveAccess(m.id, m.roles);
+      const r0 = resolveAccess(m.id, m.roles, m.nick);
       const access = extraAdmins.has(m.id) ? ("admin" as const) : r0.access;
       const rankNum = r0.rankNum;
       const rankRole = [...RANK_ROLES].reverse().find((r) => m.roles.includes(r.id));

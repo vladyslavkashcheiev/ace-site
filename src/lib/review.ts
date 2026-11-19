@@ -1,5 +1,5 @@
 import "server-only";
-import { audit, rankRoleFor, setRankRole, type Actor } from "./staff";
+import { audit, rankRoleFor, setRankRole, syncGroupRole, type Actor } from "./staff";
 import { db } from "./db";
 import { fetchMemberRoles, finalizeMessage, publish, replyTo } from "./discord";
 import { resolveAccess } from "./access";
@@ -24,7 +24,7 @@ export async function reviewReport(actor: Actor, id: number, action: string, not
   if (action === "approve") {
     const member = await fetchMemberRoles(r.discord_id);
     if (!member) return { ok: false, error: "Боец больше не на сервере." };
-    const { rankNum } = resolveAccess(r.discord_id, member.roles);
+    const { rankNum } = resolveAccess(r.discord_id, member.roles, member.nick);
     const hasRankRole = !!rankRoleFor(r.from_rank) && member.roles.includes(rankRoleFor(r.from_rank)!.id);
     if (!hasRankRole && rankNum !== r.from_rank) return { ok: false, error: `Звание бойца уже изменилось (сейчас ${rankNum ?? "—"}). Отклони отчёт или попроси подать заново.` };
     if (rankRoleFor(r.to_rank)) {
@@ -35,7 +35,8 @@ export async function reviewReport(actor: Actor, id: number, action: string, not
         return { ok: false, error: `Не удалось сменить роль: ${(e as Error).message.slice(0, 150)}. Проверь, что роль бота выше ролей званий.` };
       }
     } else {
-      info = `Роли для «${rankName(r.to_rank)}» в Discord нет — выдай вручную.`;
+      await syncGroupRole(r.discord_id, member.roles, r.to_rank, `Повышение одобрил ${actor.name}`).catch(() => {});
+      info = `Роли для «${rankName(r.to_rank)}» в Discord нет — поменяй цифру в нике вручную.`;
     }
   }
 

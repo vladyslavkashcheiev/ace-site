@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { apiActor, audit, setRankRole } from "@/lib/staff";
 import { addRole, fetchMemberRoles, removeRole } from "@/lib/discord";
 import { db, getProfile } from "@/lib/db";
-import { ACE_MEMBER_ROLE, ADMIN_USER_ID, RANK_ROLES, STAFF_ROLES } from "@/config/discord";
+import { ACE_MEMBER_ROLE, ADMIN_USER_ID, GROUP_ROLES, RANK_ROLES, STAFF_ROLES } from "@/config/discord";
 import { rankName } from "@/lib/ranks";
 
 const fail = (error: string, status = 400) => NextResponse.json({ error }, { status });
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       case "dismiss": {
         if (userId === ADMIN_USER_ID) return fail("Администратора уволить нельзя.");
         if (!reason) return fail("Укажи причину увольнения.");
-        const all = [...RANK_ROLES.map((r) => r.id), ...Object.values(STAFF_ROLES), ACE_MEMBER_ROLE].filter(Boolean);
+        const all = [...RANK_ROLES.map((r) => r.id), ...Object.values(GROUP_ROLES).map((g) => g.id), ...Object.values(STAFF_ROLES), ACE_MEMBER_ROLE].filter(Boolean);
         for (const id of all) if (member.roles.includes(id)) await removeRole(userId, id, why("Увольнение из ACE"));
         await audit(actor, "Уволил из ACE", target, reason);
         break;

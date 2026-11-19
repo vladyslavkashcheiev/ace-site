@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   }
 
   const member = await fetchMemberRoles(s.id).catch(() => null);
-  const { access, rankNum } = resolveAccess(s.id, member?.roles ?? null);
+  const { access, rankNum } = resolveAccess(s.id, member?.roles ?? null, member?.nick);
   if (access === "guest") return fail("У тебя нет роли ACE на сервере.", 403);
 
   const profile = await getProfile(s.id);

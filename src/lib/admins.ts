@@ -13,8 +13,8 @@ export async function siteAdminIds(): Promise<Set<string>> {
 }
 
 /** resolveAccess + проверка списка администраторов в базе. */
-export async function accessFor(userId: string, roles: string[] | null) {
-  const r = resolveAccess(userId, roles);
+export async function accessFor(userId: string, roles: string[] | null, nick?: string | null) {
+  const r = resolveAccess(userId, roles, nick);
   if (r.access !== "admin" && (await siteAdminIds()).has(userId)) return { ...r, access: "admin" as const };
   return r;
 }

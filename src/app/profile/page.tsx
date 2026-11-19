@@ -3,7 +3,7 @@ import { requireAce } from "@/lib/guard";
 import { cooldownSince } from "@/lib/admins";
 import { ACCESS_LABEL, atLeast } from "@/lib/access";
 import { avatarUrl, fetchGuildRoleNames } from "@/lib/discord";
-import { RANK_ROLES, STAFF_ROLES, ACE_MEMBER_ROLE } from "@/config/discord";
+import { RANK_ROLES, STAFF_ROLES, ACE_MEMBER_ROLE, GROUP_ROLES } from "@/config/discord";
 import { lastExamRequests, lastReports, type ExamRow, type ReportRow } from "@/lib/db";
 import { rankName, requirementFrom } from "@/lib/ranks";
 
@@ -28,7 +28,7 @@ export default async function Profile() {
   }
   let roleNames: Record<string, string> = {};
   if (s.access === "admin") roleNames = await fetchGuildRoleNames().catch(() => ({}));
-  const known = new Set<string>([...RANK_ROLES.map((r) => r.id), ...Object.values(STAFF_ROLES), ACE_MEMBER_ROLE].filter(Boolean));
+  const known = new Set<string>([...RANK_ROLES.map((r) => r.id), ...Object.values(GROUP_ROLES).map((g) => g.id), ...Object.values(STAFF_ROLES), ACE_MEMBER_ROLE].filter(Boolean));
   const rank = s.rankNum;
   const req = rank ? requirementFrom(rank) : null;
   const cdSince = new Date(await cooldownSince(s.id).catch(() => new Date(0).toISOString())).getTime();

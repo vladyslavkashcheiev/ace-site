@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
   // Роли проверяем заново — вдруг роль сняли или повысили после входа.
   const member = await fetchMemberRoles(s.id).catch(() => null);
-  const { access, rankNum } = resolveAccess(s.id, member?.roles ?? null);
+  const { access, rankNum } = resolveAccess(s.id, member?.roles ?? null, member?.nick);
   if (access === "guest") return fail("У тебя нет роли ACE на сервере.", 403);
   if (!rankNum) return fail("Не найдена роль звания ACE в Discord. Попроси командование выдать её.", 403);
 

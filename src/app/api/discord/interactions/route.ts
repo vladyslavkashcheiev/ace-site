@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   const id = Number(idStr);
   if (!["rep", "exam", "repmodal", "exammodal"].includes(kind) || !id) return ephemeral("Неизвестная кнопка.");
 
-  const { access } = await accessFor(m.user.id, m.roles);
+  const { access } = await accessFor(m.user.id, m.roles, m.nick);
   const isReport = kind.startsWith("rep");
   const need = isReport ? "deputy" : "instructor";
   if (!atLeast(access, need)) return ephemeral(isReport ? "Одобрять отчёты могут D.Com, Com, Cur." : "Принимать аттестации могут инструкторы и командование.");
