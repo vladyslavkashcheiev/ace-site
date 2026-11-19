@@ -2,12 +2,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import data from "@/data/handbook.json";
+import NgCharter from "./NgCharter";
+import LawsReader from "./LawsReader";
 
-type Tab = "ranks" | "codes" | "laws" | "rules" | "codex" | "uniform" | "base";
+type Tab = "ranks" | "codes" | "laws" | "ng" | "rules" | "codex" | "uniform" | "base";
 const TABS: { id: Tab; label: string }[] = [
   { id: "ranks", label: "Повышение" },
   { id: "codes", label: "Радиокоды" },
   { id: "laws", label: "Законы" },
+  { id: "ng", label: "Устав NG" },
   { id: "rules", label: "Устав ACE" },
   { id: "codex", label: "Кодекс чести" },
   { id: "uniform", label: "Форма ACE" },
@@ -112,20 +115,9 @@ export default function Handbook() {
           </>
         )}
 
-        {tab === "laws" && (
-          <div className="pad stack">
-            <span className="muted">Законы штата, которые обязан знать каждый военнослужащий. Открываются на форуме GTA5RP.</span>
-            <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
-              {data.laws.map((l) => (
-                <a key={l.url} className="tile" href={l.url} target="_blank" rel="noopener noreferrer">
-                  <span className="lbl">{l.kind}</span>
-                  <b style={{ fontSize: 18, lineHeight: 1.3 }}>{l.title}</b>
-                  <span className="code" style={{ fontSize: 12, letterSpacing: ".12em", textTransform: "uppercase", marginTop: "auto" }}>Открыть на форуме ↗</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
+        {tab === "laws" && <LawsReader />}
+
+        {tab === "ng" && <NgCharter />}
 
         {tab === "rules" && (
           <div className="pad stack">

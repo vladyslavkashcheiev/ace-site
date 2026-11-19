@@ -244,3 +244,25 @@ a.tile:hover { color: var(--text); border-left-color: var(--gold); }
 @media (prefers-reduced-motion: reduce) {
   .mt-truck, .mt-front, .mt-jack, .mt-old, .mt-new, .mt-spin-old, .mt-spin-new, .mt-wrench, .mt-bar span, .mt-dots i { animation-duration: 20s; }
 }
+
+/* Устав NG */
+.ng-ch { border: 1px solid var(--line-2); background: var(--panel-2); }
+.ng-ch > summary { list-style: none; cursor: pointer; display: flex; gap: 14px; align-items: baseline; padding: 14px 18px; transition: background 0.2s; }
+.ng-ch > summary::-webkit-details-marker { display: none; }
+.ng-ch > summary::after { content: "+"; margin-left: auto; color: var(--gold); font-size: 20px; }
+.ng-ch[open] > summary::after { content: "−"; }
+.ng-ch > summary:hover { background: rgba(212, 180, 106, 0.06); }
+.ng-cn { min-width: 44px; font-size: 18px; }
+.ng-body { padding: 4px 18px 16px; border-top: 1px solid var(--line-2); }
+.ng-art { font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold-2); padding: 14px 0 6px; }
+.ng-pt { display: grid; grid-template-columns: 58px 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid #22291c; font-size: 15px; line-height: 1.5; color: var(--text-2); }
+.ng-pt.ace { background: rgba(212, 180, 106, 0.08); border-left: 2px solid var(--gold); padding-left: 8px; margin-left: -10px; }
+.ng-n { font-size: 14px; }
+.ng-sub { margin: 2px 0 0; padding-left: 18px; }
+.ng-sub li { margin: 2px 0; }
+.ng-hl { background: rgba(212, 180, 106, 0.35); color: var(--text); padding: 0 2px; }
+.law-btn { text-align: left; cursor: pointer; font: inherit; color: inherit; width: 100%; }
+.law-tag { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border: 1px solid var(--line-3); color: var(--gold-2); }
+.law-tag.red { border-color: var(--red); color: var(--red); }
+.law-crumb { all: unset; cursor: pointer; font-size: 13px; letter-spacing: 0.06em; color: var(--gold-2); }
+.law-crumb:hover { color: var(--gold); text-decoration: underline; }
